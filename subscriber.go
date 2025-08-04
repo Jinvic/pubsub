@@ -85,6 +85,10 @@ func (s *Subscriber) Receive(msg Message) {
 	s.MsgChan <- msg
 }
 
+func (s *Subscriber) Consume() Message {
+	return <-s.MsgChan
+}
+
 func (s *Subscriber) TryConsume() (Message, bool) {
 	select {
 	case msg := <-s.MsgChan:
