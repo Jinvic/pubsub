@@ -11,11 +11,15 @@ type Publisher struct {
 	mu          sync.RWMutex
 }
 
-func NewPublisher() *Publisher {
-	return &Publisher{
+func NewPublisher(autoRegister bool) *Publisher {
+	pub := &Publisher{
 		ID:          randPubID(),
 		Subscribers: make(map[string]map[PubSubID]struct{}),
 	}
+	if autoRegister {
+		RegisterPublisher(pub)
+	}
+	return pub
 }
 
 func (p *Publisher) AddSubscriber(subID PubSubID, topic string) {
@@ -71,4 +75,8 @@ func (p *Publisher) Publish(topics []string, data []byte) {
 			}
 		}(subID)
 	}
+}
+
+func (p *Publisher) Unregister() {
+	UnregisterPublisher(p)
 }

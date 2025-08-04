@@ -9,16 +9,19 @@ type Subscriber struct {
 	mu            sync.RWMutex
 }
 
-func NewSubscriber(bufferSize int) *Subscriber {
+func NewSubscriber(bufferSize int, autoRegister bool) *Subscriber {
 	if bufferSize <= 0 {
 		bufferSize = 10
 	}
-
-	return &Subscriber{
+	sub := &Subscriber{
 		ID:            randSubID(),
 		Subscriptions: make(map[PubSubID]map[string]struct{}),
 		MsgChan:       make(chan Message, bufferSize),
 	}
+	if autoRegister {
+		RegisterSubscriber(sub)
+	}
+	return sub
 }
 
 func (s *Subscriber) Subscribe(pubID PubSubID, topic string) {
@@ -93,4 +96,9 @@ func (s *Subscriber) TryConsume() (Message, bool) {
 
 func (s *Subscriber) Close() {
 	close(s.MsgChan)
+	UnregisterSubscriber(s)
+}
+
+func (s *Subscriber) Unregister() {
+	UnregisterSubscriber(s)
 }

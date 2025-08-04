@@ -6,10 +6,8 @@ import (
 )
 
 func TestPublish(t *testing.T) {
-	pub := NewPublisher()
-	RegisterPublisher(pub)
-	sub := NewSubscriber(10)
-	RegisterSubscriber(sub)
+	pub := NewPublisher(true)
+	sub := NewSubscriber(10, true)
 
 	sub.Subscribe(pub.ID, "test-topic")
 
@@ -27,7 +25,7 @@ func TestPublish(t *testing.T) {
 }
 
 func TestSubscribeAndUnsubscribeTopic(t *testing.T) {
-	sub := NewSubscriber(10)
+	sub := NewSubscriber(10, false)
 	pubID := randPubID()
 
 	// Subscribe to a topic
@@ -44,7 +42,7 @@ func TestSubscribeAndUnsubscribeTopic(t *testing.T) {
 }
 
 func TestUnsubscribePublisher(t *testing.T) {
-	sub := NewSubscriber(10)
+	sub := NewSubscriber(10, false)
 	pubID := randPubID()
 	sub.Subscribe(pubID, "topic1")
 	sub.Subscribe(pubID, "topic2")
