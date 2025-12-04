@@ -18,7 +18,7 @@
 ## 📦 安装
 
 ```bash
-go get github.com/Jinvic/pubsub-exmaple
+go get github.com/Jinvic/pubsub
 ```
 
 ## 🚀 快速开始
@@ -29,7 +29,7 @@ package main
 import (
     "fmt"
     "time"
-    pubsub "Jinvic/pubsub-exmaple"
+    pubsub "github.com/Jinvic/pubsub"
 )
 
 func main() {

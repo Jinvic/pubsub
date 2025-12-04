@@ -1,4 +1,4 @@
-module pubsub
+module github.com/Jinvic/pubsub
 
 go 1.23.0
 
