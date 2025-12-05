@@ -1,6 +1,10 @@
 package pubsub
 
-import "sync"
+import (
+	"context"
+	"errors"
+	"sync"
+)
 
 type Subscriber struct {
 	ID            PubSubID
@@ -8,6 +12,8 @@ type Subscriber struct {
 	MsgChan       chan Message
 	mu            sync.RWMutex
 }
+
+var ErrSubscriberClosed = errors.New("subscriber closed")
 
 func NewSubscriber(bufferSize int, autoRegister bool) *Subscriber {
 	if bufferSize <= 0 {
@@ -85,16 +91,31 @@ func (s *Subscriber) Receive(msg Message) {
 	s.MsgChan <- msg
 }
 
-func (s *Subscriber) Consume() Message {
-	return <-s.MsgChan
+func (s *Subscriber) Consume() (Message, error) {
+	return s.ConsumeContext(context.Background())
 }
 
-func (s *Subscriber) TryConsume() (Message, bool) {
+func (s *Subscriber) ConsumeContext(ctx context.Context) (Message, error) {
 	select {
-	case msg := <-s.MsgChan:
-		return msg, true
+	case <-ctx.Done():
+		return Message{}, ctx.Err()
+	case msg, ok := <-s.MsgChan:
+		if !ok {
+			return Message{}, ErrSubscriberClosed
+		}
+		return msg, nil
+	}
+}
+
+func (s *Subscriber) TryConsume() (Message, bool, error) {
+	select {
+	case msg, ok := <-s.MsgChan:
+		if !ok {
+			return Message{}, false, ErrSubscriberClosed
+		}
+		return msg, true, nil
 	default:
-		return Message{}, false
+		return Message{}, false, nil
 	}
 }
 
