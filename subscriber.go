@@ -6,15 +6,26 @@ import (
 	"sync"
 )
 
+// Subscriber represents a subscriber in the pubsub system.
+// It maintains subscriptions to publishers and their topics, and provides
+// methods to consume messages.
 type Subscriber struct {
-	ID            PubSubID
+	// ID is the unique identifier for this subscriber.
+	ID PubSubID
+	// Subscriptions is a map of publisher ID to topic subscriptions.
 	Subscriptions map[PubSubID]map[string]struct{}
-	MsgChan       chan Message
-	mu            sync.RWMutex
+	// MsgChan is the channel through which messages are received.
+	MsgChan chan Message
+	// mu provides concurrent-safe access to the subscriber's fields.
+	mu sync.RWMutex
 }
 
+// ErrSubscriberClosed is returned when trying to consume from a closed subscriber.
 var ErrSubscriberClosed = errors.New("subscriber closed")
 
+// NewSubscriber creates a new subscriber.
+// bufferSize specifies the size of the message channel buffer. If bufferSize <= 0, it defaults to 10.
+// If autoRegister is true, the subscriber is automatically registered in the global Subscribers map.
 func NewSubscriber(bufferSize int, autoRegister bool) *Subscriber {
 	if bufferSize <= 0 {
 		bufferSize = 10
@@ -30,6 +41,8 @@ func NewSubscriber(bufferSize int, autoRegister bool) *Subscriber {
 	return sub
 }
 
+// Subscribe subscribes to a topic of a specific publisher.
+// This method is safe for concurrent use.
 func (s *Subscriber) Subscribe(pubID PubSubID, topic string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -45,6 +58,8 @@ func (s *Subscriber) Subscribe(pubID PubSubID, topic string) {
 	}
 }
 
+// UnsubscribePublisher unsubscribes from all topics of a specific publisher.
+// This method is safe for concurrent use.
 func (s *Subscriber) UnsubscribePublisher(pubID PubSubID) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -65,6 +80,8 @@ func (s *Subscriber) UnsubscribePublisher(pubID PubSubID) {
 	}
 }
 
+// UnsubscribeTopic unsubscribes from specific topics of a publisher.
+// This method is safe for concurrent use.
 func (s *Subscriber) UnsubscribeTopic(pubID PubSubID, topics []string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -87,14 +104,20 @@ func (s *Subscriber) UnsubscribeTopic(pubID PubSubID, topics []string) {
 	}
 }
 
+// Receive receives a message and sends it to the subscriber's message channel.
+// This method is safe for concurrent use.
 func (s *Subscriber) Receive(msg Message) {
 	s.MsgChan <- msg
 }
 
+// Consume blocks until a message is received from the message channel.
+// Returns the received message and any error that occurred.
 func (s *Subscriber) Consume() (Message, error) {
 	return s.ConsumeContext(context.Background())
 }
 
+// ConsumeContext blocks until a message is received or the context is cancelled.
+// Returns the received message and any error that occurred.
 func (s *Subscriber) ConsumeContext(ctx context.Context) (Message, error) {
 	select {
 	case <-ctx.Done():
@@ -107,6 +130,8 @@ func (s *Subscriber) ConsumeContext(ctx context.Context) (Message, error) {
 	}
 }
 
+// TryConsume attempts to receive a message without blocking.
+// Returns the received message, a boolean indicating if a message was received, and any error that occurred.
 func (s *Subscriber) TryConsume() (Message, bool, error) {
 	select {
 	case msg, ok := <-s.MsgChan:
@@ -119,6 +144,7 @@ func (s *Subscriber) TryConsume() (Message, bool, error) {
 	}
 }
 
+// Unregister closes the message channel and removes the subscriber from the global Subscribers map.
 func (s *Subscriber) Unregister() {
 	close(s.MsgChan)
 	UnregisterSubscriber(s)
