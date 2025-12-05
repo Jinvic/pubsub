@@ -98,11 +98,7 @@ func (s *Subscriber) TryConsume() (Message, bool) {
 	}
 }
 
-func (s *Subscriber) Close() {
-	close(s.MsgChan)
-	UnregisterSubscriber(s)
-}
-
 func (s *Subscriber) Unregister() {
+	close(s.MsgChan)
 	UnregisterSubscriber(s)
 }
