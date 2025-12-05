@@ -1,0 +1,89 @@
+syntax = "proto3";
+
+package pubsub;
+option go_package = "pkg/pb/pubsub;pubsub";
+
+import "google/protobuf/empty.proto";
+
+service PubsubService {
+  rpc NewPublisher(google.protobuf.Empty) returns (NewPublisherResponse);
+  rpc UnregisterPublisher(UnregisterPublisherRequest) returns (google.protobuf.Empty);
+  rpc Publish(PublishRequest) returns (google.protobuf.Empty);
+
+  rpc NewSubscriber(NewSubscriberRequest) returns (NewSubscriberResponse);
+  rpc UnregisterSubscriber(UnregisterSubscriberRequest) returns (google.protobuf.Empty);
+  rpc Subscribe(SubscribeRequest) returns (google.protobuf.Empty);
+  rpc UnsubscribePublisher(UnsubscribePublisherRequest) returns (google.protobuf.Empty);
+  rpc UnsubscribeTopic(UnsubscribeTopicRequest) returns (google.protobuf.Empty);
+  rpc TryConsume(TryConsumeRequest) returns (TryConsumeResponse);
+  rpc KeepConsume(KeepConsumeRequest) returns (stream KeepConsumeResponse);
+
+}
+
+message Message {
+  string id = 1;
+  bytes data = 2;
+  repeated string topics = 3;
+  string publisher = 4;
+  int64 created_at = 5;
+}
+
+message NewPublisherResponse {
+  string pub_id = 1;
+}
+
+message UnregisterPublisherRequest {
+  string pub_id = 1;
+}
+
+message PublishRequest {
+  string pub_id = 1;
+  repeated string topics = 2;
+  bytes data = 3;
+}
+
+message NewSubscriberRequest {
+  int32 buffer_size = 1;
+}
+
+message NewSubscriberResponse {
+  string sub_id = 1;
+}
+
+message UnregisterSubscriberRequest {
+  string sub_id = 1;
+}
+
+message SubscribeRequest {
+  string sub_id = 1;
+  string pub_id = 2;
+  string topic = 3;
+}
+
+message UnsubscribePublisherRequest {
+  string sub_id = 1;
+  string pub_id = 2;
+}
+
+message UnsubscribeTopicRequest {
+  string sub_id = 1;
+  string pub_id = 2;
+  repeated string topics = 3;
+}
+
+message TryConsumeRequest {
+  string sub_id = 1;
+}
+
+message TryConsumeResponse {
+  Message message = 1;
+  bool ok = 2;
+}
+
+message KeepConsumeRequest {
+  string sub_id = 1;
+}
+
+message KeepConsumeResponse {
+  Message message = 1;
+}
